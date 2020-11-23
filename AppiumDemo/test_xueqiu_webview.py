@@ -5,8 +5,11 @@ import time
 
 from appium import webdriver
 import pytest
+from appium.webdriver.common.mobileby import MobileBy
 from appium.webdriver.common.touch_action import TouchAction
 from appium.webdriver.webdriver import WebDriver
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.wait import WebDriverWait
 
 
 class TestXueqiuAndroid(object):
@@ -15,13 +18,16 @@ class TestXueqiuAndroid(object):
     @classmethod
     def setup_class(cls):
         print("setup class")
-        cls.driver=cls.init_appium()
+        #cls.driver=cls.init_appium()
+        cls.driver=cls.restart_appium()
+        cls.driver.find_element_by_xpath("//android.widget.RelativeLayout[3]/android.widget.ImageView").click()
 
     def setup_method(self):
         print("setup method")
 
-        TestXueqiuAndroid.driver=self.restart_appium()
+        #TestXueqiuAndroid.driver=self.restart_appium()
         self.driver = TestXueqiuAndroid.driver
+        self.driver.find_element_by_xpath("//android.widget.RelativeLayout[3]/android.widget.ImageView").click()
 
     def test_login(self):
 
@@ -52,7 +58,17 @@ class TestXueqiuAndroid(object):
             action.press(x=rect['width']*0.8,y=rect['height']*0.8).move_to(x=rect['width']*0.2,y=rect['height']*0.2).release().perform()
             time.sleep(2)
 
+    def test_webview_simulator_native(self):
+        self.driver.find_element_by_xpath("//*[@text='A股开户']").click()
+        self.driver.find_element_by_xpath("//*[@text='立即开户']")
+        WebDriverWait(self.driver,10).\
+            until(EC.presence_of_element_located((MobileBy.XPATH,"//*[@text='立即开户']")))
 
+    def test_webview_simulator_css(self):
+        print(self.driver.contexts)
+        print(self.driver.current_context)
+        self.driver.switch_to.context(self.driver.contexts[0])
+        print(self.driver.current_context)
 
     def test_message(self):
         TestXueqiuAndroid.driver.find_element_by_id("com.xueqiu.android:id/action_message").click()
@@ -74,7 +90,7 @@ class TestXueqiuAndroid(object):
 
 
     def teardown_method(self):
-        TestXueqiuAndroid.driver.quit()
+        self.driver.back()
 
     @classmethod
     def restart_appium(cls)->WebDriver:
@@ -84,6 +100,6 @@ class TestXueqiuAndroid(object):
         caps["appPackage"] = "com.xueqiu.android"
         caps["appActivity"] = ".view.WelcomeActivityAlias"
         caps["noReset"]=True
-        driver = webdriver.Remote("http://localhost:4723/wd/hub", caps)
+        driver = webdriver.Remote("http://localhost:5723/wd/hub", caps)
         driver.implicitly_wait(20)
         return driver
